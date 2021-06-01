@@ -35,6 +35,11 @@ ml_urls = []
 ml_price = []
 ml_seller = []
 
+## MAGAZINE LUIZA ##
+magazine_urls = []
+magazine_sellers = []
+magazine_price = []
+
 #FUNÇÕES 
 ## AMAZON ##
 def amazon_pages_url():
@@ -191,6 +196,9 @@ def amazon_search_atributes(url):
 
 ## MERCADO LIVRE ##
 def ml_search_links(url):
+    #Colocando a variável como global 
+    global ml_urls
+    
     #Tempo mínimo
     time.sleep(2)
 
@@ -222,8 +230,17 @@ def ml_search_links(url):
     ml_urls = [s for s in ml_urls if 'tracking_id' in s]
     ml_urls = [s for s in ml_urls if not 'suporte' in s]
 
-    #Tirando as duplicadas 
-    ml_urls = set(ml_urls)
+    #Criar o Dataset com as url
+    Dataset = pd.DataFrame()
+
+    #Colocando as urls dentro do DataFrame
+    Dataset['Urls'] = ml_urls
+
+    #Tirando as duplicadas
+    Dataset = Dataset.drop_duplicates()
+
+    #Retornando o Dataset 
+    return Dataset
 
 def ml_search_attributes(url):
     #Tempo
@@ -261,6 +278,72 @@ def ml_search_attributes(url):
         ml_seller.append(seller_name)
     except:
         ml_seller.append("Erro")
+
+## MAGAZINE LUIZA ##
+def magazine_search_links():
+    #Passando a variável global 
+    global magazine_urls
+    
+    #Criando o tempo 
+    time.sleep(0.3)
+
+    #Criando a variável da página 
+    pagina = 0 
+
+    #Fazendo o loop 
+    while pagina <= 4:
+        
+        #Pegando a url base 
+        url = 'https://www.magazineluiza.com.br/busca/estabilizador%20Zhiyun/{}/?ordem=maior-preco'.format(pagina)
+
+        #Fazendo o requests 
+        response = urlopen(url)
+        html = response.read()
+
+        #Criando o soup 
+        soup = BeautifulSoup(html, 'html.parser')
+
+        #Achando todos os links 
+        for link in soup.find_all("a", href=True):
+            magazine_urls.append(link['href'])
+
+        #Adicionando a página na url principal 
+        pagina = pagina + 1
+
+    #Limpando todos os links
+    magazine_urls = [s for s in magazine_urls if '/p/' in s]
+    magazine_urls = [s for s in magazine_urls if not 'parafuso' in s]
+    magazine_urls = [s for s in magazine_urls if not 'controle' in s]
+    magazine_urls = [s for s in magazine_urls if not 'extensor' in s]
+    magazine_urls = [s for s in magazine_urls if not 'extensao' in s]
+    magazine_urls = [s for s in magazine_urls if not 'carregador' in s]
+
+def magazine_search_attributes(url):
+    #Tempo 
+    time.sleep(10)
+
+    #Fazendo o requests 
+    response = urlopen(url)
+    html = response.read()
+
+    #Criando o soup 
+    bs = BeautifulSoup(html, 'html.parser')
+
+    #try do preço 
+    try: 
+        price = bs.find(class_='price-template__text').text
+        magazine_price.append(price)
+    except:
+        dispo = bs.find(class_="unavailable__product-title").text
+        magazine_price.append(dispo)
+
+    #Fazendo o try do seller 
+    try: 
+        seller = bs.find(class_="seller-info-button js-seller-modal-button").text
+        magazine_sellers.append(seller)
+    except:
+        magazine_sellers.append("Erro")
+
 
 #APLICATIVO 
 
@@ -311,7 +394,8 @@ if escolha == 1:
     #Aviso exportação 
     print("O ARQUIVO COM OS ANÚNCIOS FOI TRANSFERIDO NA PASTA DE DOWNLOADS DA FERRAMENTA")
 
-    Dataset.to_excel(r'C:\Users\pedro\Documents\FIVE-C\Automation\Urls\Scraper - Zhiyun\downloads\amazon.xlsx')
+    #Exportando o arquivo
+    Dataset.to_excel(r'C:\Users\pedro\Documents\FIVE-C\Automation\Urls\Scraper - Zhiyun\downloads\amazon.xlsx', index=False)
 elif escolha == 2:
     print("O site americanas ainda não está operacional")
 elif escolha == 3:
@@ -325,14 +409,10 @@ elif escolha == 5:
     ml_search_links(ml_url_base)
 
     #Pegando todos os atributos 
-    for url in tqdm(ml_urls):
+    for url in tqdm(Dataset['Urls']):
         ml_search_attributes(url)
 
-    #Criando o Dataset 
-    Dataset = pd.DataFrame()
-
-    #Colocando as informações 
-    Dataset['Urls'] = ml_urls
+    #Colocando os valores nas colunas
     Dataset['Seller'] = ml_seller
     Dataset['Preço'] = ml_price
     Dataset['Loja'] = 'MERCADO LIVRE'
@@ -343,3 +423,34 @@ elif escolha == 5:
 
     #Pegando apenas as informações que tem o preço maior que 200
     Dataset = Dataset[Dataset['Preço'] > 200]
+
+    #Exportando o dataset 
+    Dataset.to_excel(r'C:\Users\pedro\Documents\FIVE-C\Automation\Urls\Scraper - Zhiyun\downloads\mercado_livre.xlsx', index=False)
+elif escolha == 6:
+    print("Você escolheu MAGAZINE LUIZA, espera alguns minutos para a ferramenta começar a busca dos anúncios")
+
+    #Fazendo a função 
+    magazine_search_links()
+
+    #Pegando todos os atributos 
+    for url in tqdm(magazine_urls):
+        magazine_search_attributes(url)
+
+    #Criando o DataFrame 
+    Dataset = pd.DataFrame()
+
+    #Colocando os resultados na coluna
+    Dataset['Urls'] = magazine_urls
+    Dataset["Sellers"] = magazine_sellers
+    Dataset["Preço"] = magazine_price
+    Dataset["Loja"] = 'MAGAZINE LUIZA'
+    
+    #Fazendo a limpeza de espaços dentro dos sellers 
+    Dataset['Sellers'] = Dataset['Sellers'].str.replace(" ","",1)
+
+    #Exportando o Dataset 
+    Dataset.to_excel(r"C:\Users\pedro\Documents\FIVE-C\Automation\Urls\Scraper - Zhiyun\downloads\magalu.xlsx", index=False)
+elif escolha == 7:
+    print("O site Shopee ainda não está operacional")
+elif escolha == 8:
+    print("Todos os marketplaces serão iniciados, isso demorará algumas horas")
