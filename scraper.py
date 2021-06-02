@@ -408,7 +408,20 @@ elif escolha == 5:
     #Fazendo a função para pegar todos os links de todas as páginas
     ml_search_links(ml_url_base)
 
-    #Pegando todos os atributos 
+    #Limpando os links 
+    ml_urls = [s for s in ml_urls if 'tracking_id' in s]
+    ml_urls = [s for s in ml_urls if not 'suporte' in s]
+
+    #Criar o Dataset com as url
+    Dataset = pd.DataFrame()
+
+    #Colocando as urls dentro do DataFrame
+    Dataset['Urls'] = ml_urls
+
+    #Tirando as duplicadas
+    Dataset = Dataset.drop_duplicates()
+
+    #Fazendo a função com as urls certas
     for url in tqdm(Dataset['Urls']):
         ml_search_attributes(url)
 
@@ -426,6 +439,7 @@ elif escolha == 5:
 
     #Exportando o dataset 
     Dataset.to_excel(r'C:\Users\pedro\Documents\FIVE-C\Automation\Urls\Scraper - Zhiyun\downloads\mercado_livre.xlsx', index=False)
+    
 elif escolha == 6:
     print("Você escolheu MAGAZINE LUIZA, espera alguns minutos para a ferramenta começar a busca dos anúncios")
 
