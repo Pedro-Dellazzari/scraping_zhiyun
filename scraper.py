@@ -3,13 +3,15 @@
 #Importando as bibliotecas 
 import pandas as pd 
 import requests 
-import time 
+import time
+from requests.models import Response 
 from requests_html import HTML
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 from urllib.request import urlopen
+import json as JSON
 
 #Congiruando o driver 
 options = Options()
@@ -17,6 +19,10 @@ options.add_argument("--headless")
 
 #Configurando o driver 
 driver = webdriver.Chrome(executable_path='C:\Program Files\chromedriver\chromedriver.exe',options=options)
+
+#Configurando os headers 
+header_carrefour_base = {'authority':'www.carrefour.com.br','path':'/busca/estabilizador%20zhiyun?order=OrderByTopSaleDESC&page=1','scheme':'https','accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9', 'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36 OPR/76.0.4017.154'}
+header_carrefour_produtos = {'authority':'www.carrefour.com.br','scheme':'https','accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9', 'accept-language':'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7','user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36 OPR/76.0.4017.154'}
 
 #DATA 
 ## AMAZON ##
@@ -39,6 +45,13 @@ ml_seller = []
 magazine_urls = []
 magazine_sellers = []
 magazine_price = []
+
+## CARREFOUR ##
+carrefour_links = []
+carrefour_chaves = []
+carrefour_links_certo = []
+carrefour_sellers = []
+carrefour_price = []
 
 #FUNÇÕES 
 ## AMAZON ##
@@ -344,7 +357,130 @@ def magazine_search_attributes(url):
     except:
         magazine_sellers.append("Erro")
 
+## carrefour ## 
+def carrefour_page_urls():
 
+    #Variável de página 
+    pagina = 1 
+
+    #Fazendo loop para fazer a função de pegar links 
+    while pagina <= 4: 
+
+        #Criando url base 
+        url_base = 'https://www.carrefour.com.br/busca/estabilizador%20zhiyun?order=OrderByTopSaleDESC&page={}'.format(pagina)
+
+        #Fazer a função 
+        carrefour_search_link(url_base)
+
+        #Acrescentando o número da página 
+        pagina = pagina + 1 
+
+        #Fazendo um tempo antes de fazer a função novamente 
+        time.sleep(10)
+
+def carrefour_search_link(url):
+    #Tornando as variáveis globais
+    global carrefour_chaves
+    global carrefour_links
+    
+    #Faazendo o tempo 
+    time.sleep(10)
+
+    #Fazendo o requests 
+    response = requests.get(url, headers=header_carrefour_base)
+    html = response.text 
+
+    #Criando o beautifulSoap 
+    bs = BeautifulSoup(html, 'html.parser')
+
+    #Pegar o template com o json 
+    template = bs.find('template', attrs={'data-type':'json', 'data-varname':'__STATE__'})
+
+    #Pegando o texto dentro do template 
+    text = template.contents[1].string
+
+    #Fazendo o json
+    json = JSON.loads(text)
+
+    #Pegando as chaves dentro da página
+    for key in json:
+        carrefour_chaves.append(key)
+
+    #Limpando as chaves 
+    carrefour_chaves = [s for s in carrefour_chaves if 'Product' in s]
+    carrefour_chaves = [s for s in carrefour_chaves if not 'properties' in s]
+    carrefour_chaves = [s for s in carrefour_chaves if not '$' in s]
+    carrefour_chaves = [s for s in carrefour_chaves if not 'specificationGroups' in s]
+    carrefour_chaves = [s for s in carrefour_chaves if not 'items' in s]
+
+    #Construindo os links 
+    #Pegando os links dentro de cada chave de produto e construindo o link
+    for chave in carrefour_chaves:
+        carrefour_links.append('https://www.carrefour.com.br/'+ json[chave]['link'] + '/p')
+
+def carrefour_search_attributes(url):
+    #Fazendo o tempo 
+    time.sleep(10)
+
+    #Fazendo o requests 
+    response = requests.get(url, headers=header_carrefour_produtos)
+    html = response.text
+
+    #Fazendo o beautiful 
+    bs = BeautifulSoup(html, 'html.parser')
+
+    #Achando o template 
+    template = bs.find('template', attrs={'data-type':'json','data-varname':'__STATE__'})
+
+    #Pegando o texto dentro 
+    text = template.contents[1].string
+
+    #Carregando como json 
+    json = JSON.loads(text)
+
+    #Pegar a chave principal com o nome da key 
+    principal_key = list(json.keys())[0]
+
+    #Criar a chave para pegar todos os sellers 
+    seller_key = principal_key + ".items.0"
+
+    #Pegando o total de sellers
+    #Variável para pegar os ids
+    i = 0 
+
+    #Variável com o total de sellers do mesmo produto
+    sellers = []
+
+    #Pegando a quantidade sellers da oferta 
+    for id in json[seller_key]['sellers'][i]['id']:
+        try:
+            sellers.append(json[seller_key][i]['id'])
+            i = i + 1 
+        except:
+            pass
+
+    #Pegando a quantidade certa de urls
+    for item in sellers:
+        carrefour_links_certo.append("https://www.carrefour.com.br/"+json[principal_key]+'/p')
+
+    s = 0
+
+    #Pegando os sellers 
+    for item in sellers: 
+        carrefour_sellers.append(json[seller_key+'.sellers.'+s]['sellerName'])
+        s = s + 1 
+
+    a = 0
+
+    #Pegando os preços 
+    for item in sellers: 
+        carrefour_price.append(json["$"+seller_key+".sellers."+a+".commertialOffer"]['Price'])
+        a = a + 1 
+
+    
+
+
+        
 #APLICATIVO 
 
 #Printando as instruções iniciais 
@@ -399,7 +535,27 @@ if escolha == 1:
 elif escolha == 2:
     print("O site americanas ainda não está operacional")
 elif escolha == 3:
-    print("O site carrefour ainda não está operacional")
+    print("***************** Você selecinou CARREFOUR **************")
+
+    #Fazendo a função para pegar todos os links 
+    carrefour_page_urls()
+
+    #Fazendo a função para pegar os atrributos 
+    for url in tqdm(carrefour_links):
+        carrefour_search_attributes(url)
+
+    #Criando o DataFrame
+    Dataset = pd.DataFrame()
+
+    #Colocando os resultados nas colunas
+    Dataset["Urls"] = carrefour_links_certo
+    Dataset['Sellers'] = carrefour_sellers
+    Dataset['Preços'] = carrefour_price
+    Dataset['Loja'] = 'CARREFOUR'
+
+    #Exportando a planilha 
+    Dataset.to_excel(r'C:\Users\pedro\Documents\FIVE-C\Automation\Urls\Scraper - Zhiyun\downloads\carrefour.xlsx', index=False)
+
 elif escolha == 4:
     print("O site Extra ainda não está operacional")
 elif escolha == 5:
