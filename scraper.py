@@ -438,8 +438,7 @@ elif escolha == 5:
     Dataset = Dataset[Dataset['Preço'] > 200]
 
     #Exportando o dataset 
-    Dataset.to_excel(r'C:\Users\pedro\Documents\FIVE-C\Automation\Urls\Scraper - Zhiyun\downloads\mercado_livre.xlsx', index=False)
-    
+    Dataset.to_excel(r'C:\Users\pedro\Documents\FIVE-C\Automation\Urls\Scraper - Zhiyun\downloads\mercado_livre.xlsx', index=False)    
 elif escolha == 6:
     print("Você escolheu MAGAZINE LUIZA, espera alguns minutos para a ferramenta começar a busca dos anúncios")
 
@@ -468,3 +467,113 @@ elif escolha == 7:
     print("O site Shopee ainda não está operacional")
 elif escolha == 8:
     print("Todos os marketplaces serão iniciados, isso demorará algumas horas")
+
+    print("\n******************* Iniciando a busca por AMAZON ***************\n")
+
+    #Fazendo as funções de busca da AMAZON 
+
+    #Função para pegar os links 
+    amazon_pages_url()
+
+    #Fazendo a função de busca de atributos 
+    for url in tqdm(Urls_amazon):
+        amazon_search_atributes(url)
+
+    #Colocando as informações no Dataframe da AMAZON 
+       
+    #Criando Dataset 
+    Dataset_amazon = pd.DataFrame()
+
+    #Colocano os valores na colunas
+    Dataset_amazon['Urls'] = Urls_amazon + Urls_amazon_more
+    Dataset_amazon['Sellers'] = Amazon_seller + Amazon_seller_more
+    Dataset_amazon['Preço'] = Amazon_price + Amazon_price_more
+    Dataset_amazon['Loja'] = 'AMAZON'
+    Dataset_amazon['ASIN'] = Dataset_amazon['Urls'].str.partition('/dp/')[2].str.partition('/')[0]
+
+    #Limpando a caluna de preço 
+    Dataset_amazon['Preço'] = Dataset_amazon['Preço'].str.replace("R","")
+    Dataset_amazon['Preço'] = Dataset_amazon['Preço'].str.replace("$","")
+    Dataset_amazon['Preço'] = Dataset_amazon['Preço'].str.replace(r"\n","")
+    Dataset_amazon['Preço'] = Dataset_amazon['Preço'].str.replace(" ","")
+    Dataset_amazon['Preço'] = Dataset_amazon['Preço'].str.replace(".","")
+    Dataset_amazon['Preço'] = Dataset_amazon['Preço'].str.replace(",",".")
+    Dataset_amazon['Preço'] = Dataset_amazon['Preço'].str.replace("Erro","0")
+
+    #Passando o preço para float
+    Dataset_amazon['Preço'] = Dataset_amazon['Preço'].astype('float64')
+
+    #Exportando o arquivo
+    Dataset_amazon.to_excel(r'C:\Users\pedro\Documents\FIVE-C\Automation\Urls\Scraper - Zhiyun\downloads\amazon.xlsx', index=False)
+
+    #AVISO 
+    print('****************** O ARQUIVO FOI BAIXADO *************************')
+
+    #Inicio MERCADO LIVRE 
+    print("************************* INICIALIZANDO MERCADO LIVRE **********************")
+
+    #Criando tempo 
+    time.sleep(10)
+
+    #Fazendo a função para pegar todos os links de todas as páginas
+    ml_search_links(ml_url_base)
+
+    #Limpando os links 
+    ml_urls = [s for s in ml_urls if 'tracking_id' in s]
+    ml_urls = [s for s in ml_urls if not 'suporte' in s]
+
+    #Criar o Dataset com as url
+    Dataset_mercado_livre = pd.DataFrame()
+
+    #Colocando as urls dentro do DataFrame
+    Dataset_mercado_livre['Urls'] = ml_urls
+
+    #Tirando as duplicadas
+    Dataset_mercado_livre = Dataset_mercado_livre.drop_duplicates()
+
+    #Fazendo a função com as urls certas
+    for url in tqdm(Dataset_mercado_livre['Urls']):
+        ml_search_attributes(url)
+
+    #Colocando os valores nas colunas
+    Dataset_mercado_livre['Seller'] = ml_seller
+    Dataset_mercado_livre['Preço'] = ml_price
+    Dataset_mercado_livre['Loja'] = 'MERCADO LIVRE'
+
+    #Colocando a coluna de preço em números 
+    Dataset_mercado_livre['Preço'] = Dataset_mercado_livre['Preço'].str.replace('.','')
+    Dataset_mercado_livre['Preço'] = Dataset_mercado_livre['Preço'].astype('int64')
+
+    #Pegando apenas as informações que tem o preço maior que 200
+    Dataset_mercado_livre = Dataset_mercado_livre[Dataset_mercado_livre['Preço'] > 200]
+
+    #Exportando o dataset 
+    Dataset_mercado_livre.to_excel(r'C:\Users\pedro\Documents\FIVE-C\Automation\Urls\Scraper - Zhiyun\downloads\mercado_livre.xlsx', index=False) 
+
+    #AVISO 
+    print('****************** O ARQUIVO FOI BAIXADO *************************')
+
+    #Inicio MERCADO LIVRE 
+    print("************************* INICIALIZANDO MAGALU **********************")
+
+    #Fazendo a função 
+    magazine_search_links()
+
+    #Pegando todos os atributos 
+    for url in tqdm(magazine_urls):
+        magazine_search_attributes(url)
+
+    #Criando o DataFrame 
+    Dataset_magalu = pd.DataFrame()
+
+    #Colocando os resultados na coluna
+    Dataset_magalu['Urls'] = magazine_urls
+    Dataset_magalu["Sellers"] = magazine_sellers
+    Dataset_magalu["Preço"] = magazine_price
+    Dataset_magalu["Loja"] = 'MAGAZINE LUIZA'
+    
+    #Fazendo a limpeza de espaços dentro dos sellers 
+    Dataset_magalu['Sellers'] = Dataset_magalu['Sellers'].str.replace(" ","",1)
+
+    #Exportando o Dataset 
+    Dataset_magalu.to_excel(r"C:\Users\pedro\Documents\FIVE-C\Automation\Urls\Scraper - Zhiyun\downloads\magalu.xlsx", index=False)
