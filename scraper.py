@@ -48,7 +48,6 @@ magazine_price = []
 
 ## CARREFOUR ##
 carrefour_links = []
-carrefour_chaves = []
 carrefour_links_certo = []
 carrefour_sellers = []
 carrefour_price = []
@@ -402,6 +401,9 @@ def carrefour_search_link(url):
     #Fazendo o json
     json = JSON.loads(text)
 
+    #Criando variável para as chaves 
+    carrefour_chaves = []
+
     #Pegando as chaves dentro da página
     for key in json:
         carrefour_chaves.append(key)
@@ -417,10 +419,14 @@ def carrefour_search_link(url):
     #Pegando os links dentro de cada chave de produto e construindo o link
     for chave in carrefour_chaves:
         carrefour_links.append('https://www.carrefour.com.br/'+ json[chave]['link'] + '/p')
-
+    
 def carrefour_search_attributes(url):
+    global carrefour_links_certo
+    global carrefour_price
+    global carrefour_sellers
+    
     #Fazendo o tempo 
-    time.sleep(10)
+    time.sleep(12)
 
     #Fazendo o requests 
     response = requests.get(url, headers=header_carrefour_produtos)
@@ -454,26 +460,26 @@ def carrefour_search_attributes(url):
     #Pegando a quantidade sellers da oferta 
     for id in json[seller_key]['sellers'][i]['id']:
         try:
-            sellers.append(json[seller_key][i]['id'])
+            sellers.append(json[seller_key]['sellers'][i]['id'])
             i = i + 1 
         except:
             pass
 
     #Pegando a quantidade certa de urls
-    for item in sellers:
-        carrefour_links_certo.append("https://www.carrefour.com.br/"+json[principal_key]+'/p')
+    for seller in sellers:
+        carrefour_links_certo.append("https://www.carrefour.com.br/"+json[principal_key]['linkText']+'/p')
 
     s = 0
 
     #Pegando os sellers 
-    for item in sellers: 
+    for seller in sellers: 
         carrefour_sellers.append(json[seller_key+'.sellers.'+s]['sellerName'])
         s = s + 1 
 
     a = 0
 
     #Pegando os preços 
-    for item in sellers: 
+    for seller in sellers: 
         carrefour_price.append(json["$"+seller_key+".sellers."+a+".commertialOffer"]['Price'])
         a = a + 1 
 
