@@ -445,47 +445,46 @@ def carrefour_search_attributes(url):
     json = JSON.loads(text)
 
     #Pegar a chave principal com o nome da key 
-    principal_key = list(json.keys())[0]
+    try:
+        principal_key = list(json.keys())[0]
 
-    #Criar a chave para pegar todos os sellers 
-    seller_key = principal_key + ".items.0"
+        #Criar a chave para pegar todos os sellers 
+        seller_key = principal_key + ".items.0"
 
-    #Pegando o total de sellers
-    #Variável para pegar os ids
-    i = 0 
+        #Pegando o total de sellers
+        #Variável para pegar os ids
+        i = 0 
 
-    #Variável com o total de sellers do mesmo produto
-    sellers = []
+        #Variável com o total de sellers do mesmo produto
+        sellers = []
 
-    #Pegando a quantidade sellers da oferta 
-    for id in json[seller_key]['sellers'][i]['id']:
-        try:
-            sellers.append(json[seller_key]['sellers'][i]['id'])
-            i = i + 1 
-        except:
-            pass
+        #Pegando a quantidade sellers da oferta 
+        for id in json[seller_key]['sellers'][i]['id']:
+            try:
+                sellers.append(json[seller_key]['sellers'][i]['id'])
+                i = i + 1 
+            except:
+                pass
 
-    #Pegando a quantidade certa de urls
-    for seller in sellers:
-        carrefour_links_certo.append("https://www.carrefour.com.br/"+json[principal_key]['linkText']+'/p')
+        #Pegando a quantidade certa de urls
+        for seller in sellers:
+            carrefour_links_certo.append("https://www.carrefour.com.br/"+json[principal_key]['linkText']+'/p')
 
-    s = 0
+        s = 0
 
-    #Pegando os sellers 
-    for seller in sellers: 
-        carrefour_sellers.append(json[seller_key+'.sellers.'+str(s)]['sellerName'])
-        s = s + 1 
+        #Pegando os sellers 
+        for seller in sellers: 
+            carrefour_sellers.append(json[seller_key+'.sellers.'+str(s)]['sellerName'])
+            s = s + 1 
 
-    a = 0
+        a = 0
 
-    #Pegando os preços 
-    for seller in sellers: 
-        carrefour_price.append(json["$"+seller_key+".sellers."+str(a)+".commertialOffer"]['Price'])
-        a = a + 1 
-
-    
-
-
+        #Pegando os preços 
+        for seller in sellers: 
+            carrefour_price.append(json["$"+seller_key+".sellers."+str(a)+".commertialOffer"]['Price'])
+            a = a + 1 
+    except:
+        pass   
         
 #APLICATIVO 
 
