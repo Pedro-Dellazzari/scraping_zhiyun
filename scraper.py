@@ -473,14 +473,14 @@ def carrefour_search_attributes(url):
 
     #Pegando os sellers 
     for seller in sellers: 
-        carrefour_sellers.append(json[seller_key+'.sellers.'+s]['sellerName'])
+        carrefour_sellers.append(json[seller_key+'.sellers.'+str(s)]['sellerName'])
         s = s + 1 
 
     a = 0
 
     #Pegando os preços 
     for seller in sellers: 
-        carrefour_price.append(json["$"+seller_key+".sellers."+a+".commertialOffer"]['Price'])
+        carrefour_price.append(json["$"+seller_key+".sellers."+str(a)+".commertialOffer"]['Price'])
         a = a + 1 
 
     
